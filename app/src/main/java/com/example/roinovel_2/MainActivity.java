@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
@@ -45,7 +46,6 @@ import static com.example.roinovel_2.database.ResultsDbSchema.ResultTable.NAME;
 import static com.example.roinovel_2.database.ResultsDbSchema.ResultTable.TABLENAME;
 
 public class MainActivity extends AppCompatActivity {
-    private Button searchButton;
     private EditText searchEdit;
     private static final String EXTRA_LIST = "MAINACTIVITY.RESULTS";
 
@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        searchButton = findViewById(R.id.SearchButton);
+        Button searchButton = findViewById(R.id.SearchButton);
         searchEdit = findViewById(R.id.editSearchName);
         searchButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -65,10 +65,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    @SuppressWarnings("deprecation")
     @SuppressLint("StaticFieldLeak")
     class NovelSearch extends AsyncTask<String, Context,Boolean> {
         public ArrayList<Novel> NovelInfo = new ArrayList<Novel>();
         private static final String TAG = "NovelSearch";
+
+
 
         /**
          * Override this method to perform a computation on a background thread. The
@@ -108,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
                         .build();
                 Response response ;
                 response = client.newCall(request).execute();
-                Document doc = Jsoup.parse(response.body().string());
+                Document doc = Jsoup.parse(Objects.requireNonNull(response.body()).string());
                 Elements Headlines = doc.getElementsByClass("bookbox");
                 for (Element s: Headlines)
                 {
@@ -222,6 +225,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        assert cursor != null;
         cursor.close();
         return result;
     }
