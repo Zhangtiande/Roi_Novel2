@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">RoiNovel_2</string>
+    <string name="SearchEditText">请输入要搜索的小说</string>
+    <string name="SearchButton">搜索</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="todo">TODO</string>
+    <string name="textview">null</string>
+    <string name="ADD">放入书架</string>
+    <string name="Down">缓存</string>
+    <string name="Look">查看目录</string>
+</resources>
