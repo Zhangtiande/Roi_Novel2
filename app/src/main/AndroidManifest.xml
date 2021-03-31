@@ -14,7 +14,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.RoiNovel_2">
-        <activity android:name=".DetailActivity"></activity>
+        <activity android:name=".ChapterActivity"></activity>
+        <activity android:name=".DetailActivity" />
         <activity android:name=".ResultActivity" />
         <activity android:name=".MainActivity">
             <intent-filter>

@@ -64,30 +64,4 @@ public class ResultActivity extends AppCompatActivity {
 
 
 
-
-
-
-
-
-
-
-
-
-    static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
-
-        TextView Novel;
-
-        public ViewHolder(@NonNull View itemView) {
-            super(itemView);
-            Novel = itemView.findViewById(R.id.novelitem);
-
-        }
-
-
-        @Override
-        public void onClick(View v) {
-
-        }
-    }
-
 }

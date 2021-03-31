@@ -17,6 +17,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.roinovel_2.Novel.Novel;
+import com.example.roinovel_2.dummy.DummyContent;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,8 +30,8 @@ import okhttp3.Response;
 
 public class DetailActivity extends AppCompatActivity {
 
-    public static Novel novel;
-
+    private static Novel novel;
+    public static DummyContent dummyContent ;
 
     @SuppressLint("SetTextI18n")
     @Override
@@ -42,7 +43,11 @@ public class DetailActivity extends AppCompatActivity {
         ((TextView)findViewById(R.id.detailauthor)).setText("作者:" + novel.getAuthor());
         ((TextView)findViewById(R.id.detailname)).setText("书名：" + novel.getName());
         new NovelLoad().execute(novel);
-
+        findViewById(R.id.Look).setOnClickListener(v -> {
+            Intent intent1 = new Intent(DetailActivity.this,ChapterActivity.class);
+            intent1.putExtra("DetailActivity",novel);
+            startActivity(intent1);
+        });
     }
 
 
@@ -162,6 +167,12 @@ public class DetailActivity extends AppCompatActivity {
                 }
                 Toast.makeText(DetailActivity.this,"目录获取成功！",Toast.LENGTH_SHORT)
                         .show();
+                ArrayList<String> arrayList = new ArrayList<>();
+                for (Integer i:novel.getChapterName().keySet())
+                {
+                    arrayList.add(novel.getChapterName().get(i));
+                }
+                DetailActivity.dummyContent = new DummyContent(arrayList);
             }
         }
     }
