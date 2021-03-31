@@ -48,6 +48,7 @@ public class DetailActivity extends AppCompatActivity {
             intent1.putExtra("DetailActivity",novel);
             startActivity(intent1);
         });
+        findViewById(R.id.Look).setEnabled(false);
     }
 
 
@@ -160,11 +161,6 @@ public class DetailActivity extends AppCompatActivity {
                 DetailActivity.novel = this.novel;
                 Log.d(TAG, "onPostExecute: ImgUrl:" + ImgUrl);
                 Glide.with(DetailActivity.this).load(ImgUrl).into(imageView);
-                ArrayList<String> list = new ArrayList<>();
-                for (Integer i:this.novel.getChapterName().keySet())
-                {
-                    list.add(this.novel.getChapterName().get(i));
-                }
                 Toast.makeText(DetailActivity.this,"目录获取成功！",Toast.LENGTH_SHORT)
                         .show();
                 ArrayList<String> arrayList = new ArrayList<>();
@@ -173,6 +169,7 @@ public class DetailActivity extends AppCompatActivity {
                     arrayList.add(novel.getChapterName().get(i));
                 }
                 DetailActivity.dummyContent = new DummyContent(arrayList);
+                findViewById(R.id.Look).setEnabled(true);
             }
         }
     }
