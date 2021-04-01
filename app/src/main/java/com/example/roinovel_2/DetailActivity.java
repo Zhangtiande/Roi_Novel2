@@ -1,26 +1,31 @@
 package com.example.roinovel_2;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.bumptech.glide.Glide;
+import com.example.roinovel_2.Novel.DownloadThread;
 import com.example.roinovel_2.Novel.Novel;
 import com.example.roinovel_2.dummy.DummyContent;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,6 +37,8 @@ public class DetailActivity extends AppCompatActivity {
 
     private static Novel novel;
     public static DummyContent dummyContent ;
+    private static final HashMap<Integer,String> Content = new HashMap<>();
+    private static final String TAG = "DetailActivity";
 
     @SuppressLint("SetTextI18n")
     @Override
@@ -49,14 +56,43 @@ public class DetailActivity extends AppCompatActivity {
             startActivity(intent1);
         });
         findViewById(R.id.Look).setEnabled(false);
+        findViewById(R.id.Down).setOnClickListener(v -> new NovelDownload().execute(novel));
     }
 
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode,
+                                 Intent resultData) {
+        super.onActivityResult(requestCode, resultCode, resultData);
+        if (requestCode == 1 && resultCode == Activity.RESULT_OK) {
+            // The result data contains a URI for the document or directory that
+            // the user selected.
+            Uri uri;
+            if (resultData != null) {
+                uri = resultData.getData();
+                ParcelFileDescriptor pfd;
+                try {
+                    pfd = getContentResolver().openFileDescriptor(uri, "w");
+                    FileOutputStream fileOutputStream = new FileOutputStream(pfd.getFileDescriptor());
+                    for (Integer i: Content.keySet())
+                    {
+                        fileOutputStream.write(Objects.requireNonNull(Content.get(i)).getBytes());
+                    }
+                    fileOutputStream.close();
+                    pfd.close();
+                    Toast.makeText(this,"文件写入成功！",Toast.LENGTH_SHORT).show();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Log.e(TAG, "onActivityResult: File writing error" );
+                }
+
+            }
+        }
+    }
 
 
     @SuppressLint("StaticFieldLeak")
     class NovelLoad extends AsyncTask<Novel,Integer,Boolean> {
-        public ArrayList<Novel> NovelInfo = new ArrayList<Novel>();
         private static final String TAG = "NovelSearch";
         private String ImgUrl;
         private String des;
@@ -86,7 +122,7 @@ public class DetailActivity extends AppCompatActivity {
             try {
                 Response response = client.newCall(request).execute();
                 assert response.body() != null;
-                String resp = response.body().string();
+                String resp = Objects.requireNonNull(response.body()).string();
                 p = "<dd><a href=\"(.*)\">(.*)</a></dd>";
                 pattern = Pattern.compile(p);
                 m = pattern.matcher(resp);
@@ -173,4 +209,72 @@ public class DetailActivity extends AppCompatActivity {
             }
         }
     }
+
+
+    @SuppressWarnings("deprecation")
+    @SuppressLint("StaticFieldLeak")
+    public class NovelDownload extends AsyncTask<Novel,Integer,Boolean> {
+        private final ExecutorService fixedThreadPoll = Executors.newFixedThreadPool(3);
+        private final ArrayList<DownloadThread> threads = new ArrayList<>();
+        private  Novel novel;
+        public int all;
+        public int hasFinished = 0;
+
+        @Override
+        protected Boolean doInBackground(Novel... novels) {
+            novel = novels[0];
+            HashMap<Integer,String> map = (HashMap<Integer, String>) novel.getChapterUrlList();
+            for (Integer i:map.keySet())
+            {
+                threads.add(new DownloadThread(i,map.get(i),this));
+            }
+            all = map.size();
+            for (DownloadThread d:threads)
+            {
+                this.fixedThreadPoll.execute(d);
+            }
+            this.fixedThreadPoll.shutdown();
+            while (!fixedThreadPoll.isTerminated())
+            {
+                publishProgress(hasFinished);
+            }
+            return true;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+            Log.d(TAG, "onProgressUpdate: Progress:" + values[0] + '/' + all);
+        }
+
+        @Override
+        protected void onPostExecute(Boolean aBoolean) {
+            super.onPostExecute(aBoolean);
+            if (aBoolean)
+            {
+                Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("application/txt");
+                intent.putExtra(Intent.EXTRA_TITLE, novel.getName()+".txt");
+
+                // Optionally, specify a URI for the directory that should be opened in
+                // the system file picker when your app creates the document.
+                DetailActivity.this.startActivityForResult(intent,1);
+            }
+        }
+
+        public synchronized  void Progress()
+        {
+            hasFinished++;
+        }
+
+
+    }
+
+    public synchronized static void getContent(int id, String content)
+    {
+        content = novel.getChapterName().get(id) + '\n' + content;
+        Content.put(id,content);
+    }
+
 }
