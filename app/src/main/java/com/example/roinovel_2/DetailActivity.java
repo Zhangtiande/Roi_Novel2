@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,6 +40,8 @@ public class DetailActivity extends AppCompatActivity {
     public static DummyContent dummyContent ;
     private static final HashMap<Integer,String> Content = new HashMap<>();
     private static final String TAG = "DetailActivity";
+    public ProgressBar progressBar;
+    public TextView textView;
 
     @SuppressLint("SetTextI18n")
     @Override
@@ -47,7 +50,7 @@ public class DetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_detail);
         Intent intent = getIntent();
         novel = (Novel) intent.getSerializableExtra("DETAIL");
-        ((TextView)findViewById(R.id.detailauthor)).setText("作者:" + novel.getAuthor());
+        ((TextView)findViewById(R.id.detailauthor)).setText("作者：" + novel.getAuthor());
         ((TextView)findViewById(R.id.detailname)).setText("书名：" + novel.getName());
         new NovelLoad().execute(novel);
         findViewById(R.id.Look).setOnClickListener(v -> {
@@ -57,6 +60,8 @@ public class DetailActivity extends AppCompatActivity {
         });
         findViewById(R.id.Look).setEnabled(false);
         findViewById(R.id.Down).setOnClickListener(v -> new NovelDownload().execute(novel));
+        progressBar = findViewById(R.id.progressBar3);
+        textView = findViewById(R.id.textView);
     }
 
 
@@ -169,6 +174,7 @@ public class DetailActivity extends AppCompatActivity {
          */
         @Override
         protected void onPreExecute() {
+
             super.onPreExecute();
         }
 
@@ -241,10 +247,12 @@ public class DetailActivity extends AppCompatActivity {
             return true;
         }
 
+        @SuppressLint("SetTextI18n")
         @Override
         protected void onProgressUpdate(Integer... values) {
             super.onProgressUpdate(values);
-            Log.d(TAG, "onProgressUpdate: Progress:" + values[0] + '/' + all);
+            progressBar.setProgress(values[0]);
+            textView.setText("下载进度：" + values[0] + '/' + all);
         }
 
         @Override
@@ -268,7 +276,12 @@ public class DetailActivity extends AppCompatActivity {
             hasFinished++;
         }
 
-
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            int size = DetailActivity.novel.getChapterUrlList().size();
+            progressBar.setMax(size);
+        }
     }
 
     public synchronized static void getContent(int id, String content)

@@ -1,26 +1,26 @@
 package com.example.roinovel_2;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteException;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.roinovel_2.Novel.Novel;
 import com.example.roinovel_2.database.ResultBaseHelper;
 import com.example.roinovel_2.database.ResultsDbSchema;
+import com.example.roinovel_2.database.BookShelfBaseHelper;
+import com.example.roinovel_2.database.BookShelfDbSchema;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -30,7 +30,6 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 import okhttp3.FormBody;
@@ -39,11 +38,13 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-import static com.example.roinovel_2.database.ResultsDbSchema.ResultTable.AUTHOR;
-import static com.example.roinovel_2.database.ResultsDbSchema.ResultTable.LASTUPDATE;
-import static com.example.roinovel_2.database.ResultsDbSchema.ResultTable.MAINURL;
-import static com.example.roinovel_2.database.ResultsDbSchema.ResultTable.NAME;
-import static com.example.roinovel_2.database.ResultsDbSchema.ResultTable.TABLENAME;
+import static com.example.roinovel_2.database.BookShelfDbSchema.AUTHOR;
+import static com.example.roinovel_2.database.BookShelfDbSchema.LASTUPDATE;
+import static com.example.roinovel_2.database.BookShelfDbSchema.LASTUPDATEDATE;
+import static com.example.roinovel_2.database.BookShelfDbSchema.MAINURL;
+import static com.example.roinovel_2.database.BookShelfDbSchema.NAME;
+import static com.example.roinovel_2.database.BookShelfDbSchema.SHELFID;
+import static com.example.roinovel_2.database.BookShelfDbSchema.TABLENAME;
 
 public class MainActivity extends AppCompatActivity {
     private EditText searchEdit;
@@ -61,7 +62,16 @@ public class MainActivity extends AppCompatActivity {
                 new NovelSearch().execute(searchEdit.getText().toString());
             }
         });
-
+        SQLiteDatabase mDataBase = new BookShelfBaseHelper(MainActivity.this).getWritableDatabase();
+        if (tableIsNotExist(BookShelfDbSchema.TABLENAME))
+        {
+            mDataBase.execSQL("create TABLE " + TABLENAME + "(" +
+                    SHELFID + "  integer primary key , " +
+                    NAME + ", " + AUTHOR + ", " + LASTUPDATE + ", " + MAINURL + ", " + LASTUPDATEDATE +
+                    ")");
+        }else {
+            ;
+        }
     }
 
 
@@ -170,11 +180,13 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "onPostExecute: Success!");
                 Intent intent = newIntent(MainActivity.this,NovelInfo.size());
                 SQLiteDatabase mDataBase = new ResultBaseHelper(MainActivity.this).getWritableDatabase();
-                if (!tabbleIsExist(TABLENAME))
+                if (tableIsNotExist(ResultsDbSchema.ResultTable.TABLENAME))
                 {
-                    mDataBase.execSQL("create TABLE " + TABLENAME + "(" +
+                    mDataBase.execSQL("create TABLE " + ResultsDbSchema.ResultTable.TABLENAME + "(" +
                             " id integer primary key autoincrement, " +
-                            NAME + ", " + AUTHOR + ", " + LASTUPDATE + ", " + MAINURL + ")");
+                            ResultsDbSchema.ResultTable.NAME + ", " + ResultsDbSchema.ResultTable.AUTHOR +
+                            ", " + ResultsDbSchema.ResultTable.LASTUPDATE + ", " +
+                            ResultsDbSchema.ResultTable.MAINURL + ")");
                 }
                 for (Novel n:NovelInfo)
                 {
@@ -203,10 +215,10 @@ public class MainActivity extends AppCompatActivity {
         return contentValues;
     }
 
-    public boolean tabbleIsExist(String tableName){
+    public boolean tableIsNotExist(String tableName){
         boolean result = false;
         if(tableName == null){
-            return false;
+            return true;
         }
         SQLiteDatabase db = null;
         Cursor cursor = null;
@@ -215,19 +227,16 @@ public class MainActivity extends AppCompatActivity {
             String sql = "select count(*) as c from Sqlite_master  where type ='table' and name ='"+tableName.trim()+"' ";
             cursor = db.rawQuery(sql, null);
             if(cursor.moveToNext()){
-                int count = cursor.getInt(0);
-                if(count>0){
-                    cursor.close();
-                    result = true;
-                }
+                result = true;
             }
 
         } catch (Exception e) {
             e.printStackTrace();
+            result = false;
         }
         assert cursor != null;
         cursor.close();
-        return result;
+        return !result;
     }
 
 

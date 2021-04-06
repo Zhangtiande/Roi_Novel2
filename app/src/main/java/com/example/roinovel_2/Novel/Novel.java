@@ -1,18 +1,27 @@
 package com.example.roinovel_2.Novel;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Novel implements Serializable {
+    private int SHELFID=-1;
+    private int ImgId=0;
     private String Name;
     private String Author;
-    private int ImgId=0;
     private String LastUpdate;
     private String MainUrl;
+    private String LASTUPDATEDATE;
     private final Map<Integer,String> ChapterName = new HashMap<>();
     private final Map<Integer,String> ChapterUrlList = new HashMap<>();
+
+    public String getLASTUPDATEDATE() {
+        return LASTUPDATEDATE;
+    }
+
+    public int getSHELFID() {
+        return SHELFID;
+    }
 
     public String getName() {
         return Name;
