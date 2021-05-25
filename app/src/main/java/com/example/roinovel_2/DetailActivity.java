@@ -130,7 +130,7 @@ public class DetailActivity extends AppCompatActivity {
                 Response response = client.newCall(request).execute();
                 assert response.body() != null;
                 String resp = Objects.requireNonNull(response.body()).string();
-                p = "<dd><a href=\"(.*)\">(.*)</a></dd>";
+                p = "<dd><a href=\"(.*)\">(.*)</a></dd>";   //正则表达式获取章节网址与章节名字
                 pattern = Pattern.compile(p);
                 m = pattern.matcher(resp);
                 int i = 0;
@@ -139,20 +139,20 @@ public class DetailActivity extends AppCompatActivity {
                         i++;
                         continue;
                     }
-                    novel.getChapterName().put(i - 12, m.group(2));
-                    novel.getChapterUrlList().put((i - 12), pre_url + m.group(1));
+                    novel.getChapterName().put(i - 12, m.group(2)); //放入章节名称
+                    novel.getChapterUrlList().put((i - 12), pre_url + m.group(1));  //放入章节网址
                     i++;
                 }
                 pattern = Pattern.compile(img);
                 m = pattern.matcher(resp);
                 while (m.find()) {
-                    ImgUrl = m.group(1);
+                    ImgUrl = m.group(1);        //获取小说封面
                 }
                 int start, end;
                 start = ImgUrl.indexOf("h");
                 end = ImgUrl.indexOf("\"", start + 1);
                 ImgUrl = ImgUrl.substring(start, end);
-                pattern = Pattern.compile("<meta property=\"og:description\" content=\"(.*)\" /> \n");
+                pattern = Pattern.compile("<meta property=\"og:description\" content=\"(.*)\" /> \n");      //获取小说简介
                 m = pattern.matcher(resp);
                 while (m.find()) {
                     des = m.group(1);

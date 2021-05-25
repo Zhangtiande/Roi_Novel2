@@ -121,6 +121,8 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "doInBackground: NovelName Get!");
             URL url;
             try {
+                //输入斗罗大陆，url为 https://www.shuquge.com/search.php?searchkey=%E6%96%97%E7%BD%97%E5%A4%A7%E9%99%86
+                //中文--斗罗大陆  经过url编码后为：%E6%96%97%E7%BD%97%E5%A4%A7%E9%99%86
                 url = new URL("http://www.shuquge.com/search.php?searchkey=" + URLEncoder
                         .encode(NovelName));
 //                RequestBody fromBody = new FormBody.Builder()
@@ -135,16 +137,20 @@ public class MainActivity extends AppCompatActivity {
                 Response response;
                 response = client.newCall(request).execute();
                 Document doc = Jsoup.parse(Objects.requireNonNull(response.body()).string());
-                Elements Headlines = doc.getElementsByClass("bookbox");
+                Elements Headlines = doc.getElementsByClass("bookbox");         //选取html-body中的class-bookbox元素
                 for (Element s : Headlines) {
                     Novel temp = new Novel();
-                    Elements elements = s.getElementsByClass("bookname");
-                    temp.setName(elements.get(0).text());
+                    Elements elements = s.getElementsByClass("bookname");   //获取类名为bookname的所有元素
+                    temp.setName(elements.get(0).text());               //获取第一个元素的文本内容 即为  斗罗大陆
                     String pre_url = "http://www.shuquge.com";
+                    //获取该小说的网址，并加上该网址的前缀 e.g. http://www.shuquge.com/txt/54409/index.html
                     temp.setMainUrl(pre_url + s.getElementsByTag("a").get(0).attr("href"));
                     temp.setLastUpdate(s.getElementsByTag("a").get(1).text());
+                    //获取类名author的所有元素
                     elements = s.getElementsByClass("author");
+                    //获取第一个元素的文本的第三个字符后的文字 即为  唐家三少
                     temp.setAuthor(elements.get(0).text().substring(3));
+                    //将novel放入NovelInfo数组
                     NovelInfo.add(temp);
                 }
             } catch (IOException e) {
