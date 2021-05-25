@@ -11,12 +11,12 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class DownloadThread implements Runnable{
+public class DownloadThread implements Runnable {
 
     private final int id;
     private final String url;
-    public String con;
     private final DetailActivity.NovelDownload novelDownload;
+    public String con;
 
 
     public DownloadThread(int id, String url, DetailActivity.NovelDownload download) {
@@ -37,8 +37,7 @@ public class DownloadThread implements Runnable{
                     .build();
             Response response;
             response = client.newCall(request).execute();
-            if (response.code() != 200)
-            {
+            if (response.code() != 200) {
                 response.close();
             }
             String resp = null;
@@ -46,8 +45,7 @@ public class DownloadThread implements Runnable{
             String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;(.*)\\n?";
             Pattern r = Pattern.compile(pattern);
             Matcher m = r.matcher(resp);
-            while (m.find())
-            {
+            while (m.find()) {
                 String temp = m.group(1);
                 int i;
                 if (temp != null && (i = temp.indexOf("<br />")) != -1) {
@@ -56,7 +54,7 @@ public class DownloadThread implements Runnable{
                 con = String.format("%s%s\n", con, temp);
             }
             con = con + "\n\n";
-            DetailActivity.getContent(this.id,this.con);
+            DetailActivity.getContent(this.id, this.con);
             this.novelDownload.Progress();
         } catch (IOException e) {
             e.printStackTrace();
