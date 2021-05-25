@@ -29,15 +29,12 @@ public class NovelAdapter extends RecyclerView.Adapter<NovelAdapter.ViewHolder> 
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.novelitem,parent,false);
         ViewHolder holder = new ViewHolder(view);
-        holder.Novel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(v.getContext(), DetailActivity.class);
-                int position = holder.getAdapterPosition();
-                Novel novel = mNovelList.get(position);
-                intent.putExtra("DETAIL",novel);
-                v.getContext().startActivity(intent);
-            }
+        holder.Novel.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), DetailActivity.class);
+            int position = holder.getAdapterPosition();
+            Novel novel = mNovelList.get(position);
+            intent.putExtra("DETAIL",novel);
+            v.getContext().startActivity(intent);
         });
         return holder;
     }

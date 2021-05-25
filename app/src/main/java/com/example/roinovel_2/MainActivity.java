@@ -9,7 +9,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -17,10 +16,9 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.roinovel_2.Novel.Novel;
+import com.example.roinovel_2.database.BookShelfBaseHelper;
 import com.example.roinovel_2.database.ResultBaseHelper;
 import com.example.roinovel_2.database.ResultsDbSchema;
-import com.example.roinovel_2.database.BookShelfBaseHelper;
-import com.example.roinovel_2.database.BookShelfDbSchema;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -29,26 +27,32 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Objects;
 
-import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 
-import static com.example.roinovel_2.database.BookShelfDbSchema.AUTHOR;
-import static com.example.roinovel_2.database.BookShelfDbSchema.LASTUPDATE;
-import static com.example.roinovel_2.database.BookShelfDbSchema.LASTUPDATEDATE;
-import static com.example.roinovel_2.database.BookShelfDbSchema.MAINURL;
-import static com.example.roinovel_2.database.BookShelfDbSchema.NAME;
-import static com.example.roinovel_2.database.BookShelfDbSchema.SHELFID;
-import static com.example.roinovel_2.database.BookShelfDbSchema.TABLENAME;
-
 public class MainActivity extends AppCompatActivity {
-    private EditText searchEdit;
     private static final String EXTRA_LIST = "MAINACTIVITY.RESULTS";
+    private EditText searchEdit;
+
+    public static Intent newIntent(Context context, int len) {
+        Intent intent = new Intent(context, ResultActivity.class);
+        intent.putExtra(EXTRA_LIST, len);
+        return intent;
+    }
+
+    public static ContentValues getContentValues(Novel novel) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(ResultsDbSchema.ResultTable.NAME, novel.getName());
+        contentValues.put(ResultsDbSchema.ResultTable.AUTHOR, novel.getAuthor());
+        contentValues.put(ResultsDbSchema.ResultTable.LASTUPDATE, novel.getLastUpdate());
+        contentValues.put(ResultsDbSchema.ResultTable.MAINURL, novel.getMainUrl());
+        return contentValues;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,32 +60,40 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Button searchButton = findViewById(R.id.SearchButton);
         searchEdit = findViewById(R.id.editSearchName);
-        searchButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new NovelSearch().execute(searchEdit.getText().toString());
-            }
-        });
+        searchButton.setOnClickListener(v -> new NovelSearch().execute(searchEdit.getText().toString()));
         SQLiteDatabase mDataBase = new BookShelfBaseHelper(MainActivity.this).getWritableDatabase();
-        if (tableIsNotExist(BookShelfDbSchema.TABLENAME))
-        {
-            mDataBase.execSQL("create TABLE " + TABLENAME + "(" +
-                    SHELFID + "  integer primary key , " +
-                    NAME + ", " + AUTHOR + ", " + LASTUPDATE + ", " + MAINURL + ", " + LASTUPDATEDATE +
-                    ")");
-        }else {
-            ;
-        }
+
     }
 
+    public boolean tableIsNotExist(String tableName) {
+        boolean result = false;
+        if (tableName == null) {
+            return true;
+        }
+        SQLiteDatabase db = null;
+        Cursor cursor = null;
+        try {
+            db = new ResultBaseHelper(MainActivity.this).getReadableDatabase();
+            String sql = "select count(*) as c from Sqlite_master  where type ='table' and name ='" + tableName.trim() + "' ";
+            cursor = db.rawQuery(sql, null);
+            if (cursor.moveToNext()) {
+                result = true;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            result = false;
+        }
+        assert cursor != null;
+        cursor.close();
+        return !result;
+    }
 
     @SuppressWarnings("deprecation")
     @SuppressLint("StaticFieldLeak")
-    class NovelSearch extends AsyncTask<String, Context,Boolean> {
-        public ArrayList<Novel> NovelInfo = new ArrayList<Novel>();
+    class NovelSearch extends AsyncTask<String, Context, Boolean> {
         private static final String TAG = "NovelSearch";
-
-
+        public ArrayList<Novel> NovelInfo = new ArrayList<Novel>();
 
         /**
          * Override this method to perform a computation on a background thread. The
@@ -107,24 +119,24 @@ public class MainActivity extends AppCompatActivity {
             String NovelName = strings[0];
             OkHttpClient client = new OkHttpClient();
             Log.d(TAG, "doInBackground: NovelName Get!");
-            URL url = null;
+            URL url;
             try {
-                url = new URL("http://www.shuquge.com/search.php");
-                RequestBody fromBody = new FormBody.Builder()
-                        .add("searchkey", NovelName)
-                        .build();
+                url = new URL("http://www.shuquge.com/search.php?searchkey=" + URLEncoder
+                        .encode(NovelName));
+//                RequestBody fromBody = new FormBody.Builder()
+//                        .add("searchkey", NovelName)
+//                        .build();
                 Request request = new Request.Builder()
                         .url(url)
                         .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML" +
                                 ", like Gecko) Chrome/89.0.4389.90 Safari/537.36 Edg/89.0.774.54")
-                        .post(fromBody)
+//                        .post(fromBody)
                         .build();
-                Response response ;
+                Response response;
                 response = client.newCall(request).execute();
                 Document doc = Jsoup.parse(Objects.requireNonNull(response.body()).string());
                 Elements Headlines = doc.getElementsByClass("bookbox");
-                for (Element s: Headlines)
-                {
+                for (Element s : Headlines) {
                     Novel temp = new Novel();
                     Elements elements = s.getElementsByClass("bookname");
                     temp.setName(elements.get(0).text());
@@ -137,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-                Log.e(TAG, "doInBackground: Search Error!" );
+                Log.e(TAG, "doInBackground: Search Error!");
                 return false;
             }
             return true;
@@ -174,69 +186,24 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean aBoolean) {
             super.onPostExecute(aBoolean);
-            if (aBoolean)
-            {
-                Toast.makeText((Context) MainActivity.this,"搜索成功！",Toast.LENGTH_SHORT).show();
+            if (aBoolean) {
+                Toast.makeText(MainActivity.this, "搜索成功！", Toast.LENGTH_SHORT).show();
                 Log.d(TAG, "onPostExecute: Success!");
-                Intent intent = newIntent(MainActivity.this,NovelInfo.size());
+                Intent intent = newIntent(MainActivity.this, NovelInfo.size());
                 SQLiteDatabase mDataBase = new ResultBaseHelper(MainActivity.this).getWritableDatabase();
-                if (tableIsNotExist(ResultsDbSchema.ResultTable.TABLENAME))
-                {
+                if (tableIsNotExist(ResultsDbSchema.ResultTable.TABLENAME)) {
                     mDataBase.execSQL("create TABLE " + ResultsDbSchema.ResultTable.TABLENAME + "(" +
                             " id integer primary key autoincrement, " +
                             ResultsDbSchema.ResultTable.NAME + ", " + ResultsDbSchema.ResultTable.AUTHOR +
                             ", " + ResultsDbSchema.ResultTable.LASTUPDATE + ", " +
                             ResultsDbSchema.ResultTable.MAINURL + ")");
                 }
-                for (Novel n:NovelInfo)
-                {
-                    mDataBase.insert(ResultsDbSchema.ResultTable.TABLENAME,null,getContentValues(n));
+                for (Novel n : NovelInfo) {
+                    mDataBase.insert(ResultsDbSchema.ResultTable.TABLENAME, null, getContentValues(n));
                 }
                 startActivity(intent);
             }
         }
-    }
-
-
-    public static Intent newIntent(Context context,int len)
-    {
-        Intent intent = new Intent(context,ResultActivity.class);
-        intent.putExtra(EXTRA_LIST,len);
-        return intent;
-    }
-
-
-    public static ContentValues getContentValues(Novel novel){
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(ResultsDbSchema.ResultTable.NAME,novel.getName());
-        contentValues.put(ResultsDbSchema.ResultTable.AUTHOR,novel.getAuthor());
-        contentValues.put(ResultsDbSchema.ResultTable.LASTUPDATE,novel.getLastUpdate());
-        contentValues.put(ResultsDbSchema.ResultTable.MAINURL,novel.getMainUrl());
-        return contentValues;
-    }
-
-    public boolean tableIsNotExist(String tableName){
-        boolean result = false;
-        if(tableName == null){
-            return true;
-        }
-        SQLiteDatabase db = null;
-        Cursor cursor = null;
-        try {
-            db = new ResultBaseHelper(MainActivity.this).getReadableDatabase();
-            String sql = "select count(*) as c from Sqlite_master  where type ='table' and name ='"+tableName.trim()+"' ";
-            cursor = db.rawQuery(sql, null);
-            if(cursor.moveToNext()){
-                result = true;
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            result = false;
-        }
-        assert cursor != null;
-        cursor.close();
-        return !result;
     }
 
 

@@ -5,15 +5,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Novel implements Serializable {
-    private int SHELFID=-1;
-    private int ImgId=0;
+    private final Map<Integer, String> ChapterName = new HashMap<>();
+    private final Map<Integer, String> ChapterUrlList = new HashMap<>();
+    private final int SHELFID = -1;
+    private int ImgId = 0;
     private String Name;
     private String Author;
     private String LastUpdate;
     private String MainUrl;
     private String LASTUPDATEDATE;
-    private final Map<Integer,String> ChapterName = new HashMap<>();
-    private final Map<Integer,String> ChapterUrlList = new HashMap<>();
 
     public String getLASTUPDATEDATE() {
         return LASTUPDATEDATE;
@@ -71,8 +71,7 @@ public class Novel implements Serializable {
         return ChapterUrlList;
     }
 
-    public String string()
-    {
-        return "小说名：" + this.Name + "\n作者：" + this.Author + "\n最后更新：" + this.LastUpdate + "\n" ;
+    public String string() {
+        return "小说名：" + this.Name + "\n作者：" + this.Author + "\n最后更新：" + this.LastUpdate + "\n";
     }
 }

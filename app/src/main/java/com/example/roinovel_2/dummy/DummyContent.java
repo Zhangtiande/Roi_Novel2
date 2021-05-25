@@ -3,9 +3,7 @@ package com.example.roinovel_2.dummy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Helper class for providing sample content for user interfaces created by
@@ -18,17 +16,16 @@ public class DummyContent {
     /**
      * An array of sample (dummy) items.
      */
-    public   List<DummyItem> ITEMS = new ArrayList<DummyItem>();
+    public List<DummyItem> ITEMS = new ArrayList<DummyItem>();
 
     public DummyContent(ArrayList<String> list) {
-        for (String s:list)
-        {
+        for (String s : list) {
             DummyItem item = new DummyItem(s);
             addItem(item);
         }
     }
 
-    private  void addItem(DummyItem item) {
+    private void addItem(DummyItem item) {
         this.ITEMS.add(item);
     }
 
@@ -38,7 +35,7 @@ public class DummyContent {
     public static class DummyItem {
         public final String content;
 
-        public DummyItem( String content ) {
+        public DummyItem(String content) {
             this.content = content;
         }
 

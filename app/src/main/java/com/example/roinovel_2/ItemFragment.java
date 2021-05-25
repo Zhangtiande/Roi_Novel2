@@ -21,10 +21,9 @@ public class ItemFragment extends Fragment {
 
     // TODO: Customize parameter argument names
     private static final String ARG_COLUMN_COUNT = "column-count";
+    public DummyContent dummyContent;
     // TODO: Customize parameters
     private int mColumnCount = 1;
-    public DummyContent dummyContent;
-
 
 
     public ItemFragment() {
@@ -45,7 +44,6 @@ public class ItemFragment extends Fragment {
 //        fragment.setArguments(args);
 //        return fragment;
 //    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

@@ -16,7 +16,7 @@ public class DownloadThread implements Runnable{
     private final int id;
     private final String url;
     public String con;
-    private DetailActivity.NovelDownload novelDownload;
+    private final DetailActivity.NovelDownload novelDownload;
 
 
     public DownloadThread(int id, String url, DetailActivity.NovelDownload download) {

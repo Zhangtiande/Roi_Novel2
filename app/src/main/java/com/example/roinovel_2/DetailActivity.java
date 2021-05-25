@@ -36,12 +36,17 @@ import okhttp3.Response;
 
 public class DetailActivity extends AppCompatActivity {
 
-    private static Novel novel;
-    public static DummyContent dummyContent ;
-    private static final HashMap<Integer,String> Content = new HashMap<>();
+    private static final HashMap<Integer, String> Content = new HashMap<>();
     private static final String TAG = "DetailActivity";
+    public static DummyContent dummyContent;
+    private static Novel novel;
     public ProgressBar progressBar;
     public TextView textView;
+
+    public synchronized static void getContent(int id, String content) {
+        content = novel.getChapterName().get(id) + '\n' + content;
+        Content.put(id, content);
+    }
 
     @SuppressLint("SetTextI18n")
     @Override
@@ -50,12 +55,12 @@ public class DetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_detail);
         Intent intent = getIntent();
         novel = (Novel) intent.getSerializableExtra("DETAIL");
-        ((TextView)findViewById(R.id.detailauthor)).setText("作者：" + novel.getAuthor());
-        ((TextView)findViewById(R.id.detailname)).setText("书名：" + novel.getName());
+        ((TextView) findViewById(R.id.detailauthor)).setText("作者：" + novel.getAuthor());
+        ((TextView) findViewById(R.id.detailname)).setText("书名：" + novel.getName());
         new NovelLoad().execute(novel);
         findViewById(R.id.Look).setOnClickListener(v -> {
-            Intent intent1 = new Intent(DetailActivity.this,ChapterActivity.class);
-            intent1.putExtra("DetailActivity",novel);
+            Intent intent1 = new Intent(DetailActivity.this, ChapterActivity.class);
+            intent1.putExtra("DetailActivity", novel);
             startActivity(intent1);
         });
         findViewById(R.id.Look).setEnabled(false);
@@ -63,7 +68,6 @@ public class DetailActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar3);
         textView = findViewById(R.id.textView);
     }
-
 
     @Override
     public void onActivityResult(int requestCode, int resultCode,
@@ -79,25 +83,23 @@ public class DetailActivity extends AppCompatActivity {
                 try {
                     pfd = getContentResolver().openFileDescriptor(uri, "w");
                     FileOutputStream fileOutputStream = new FileOutputStream(pfd.getFileDescriptor());
-                    for (Integer i: Content.keySet())
-                    {
+                    for (Integer i : Content.keySet()) {
                         fileOutputStream.write(Objects.requireNonNull(Content.get(i)).getBytes());
                     }
                     fileOutputStream.close();
                     pfd.close();
-                    Toast.makeText(this,"文件写入成功！",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "文件写入成功！", Toast.LENGTH_SHORT).show();
                 } catch (IOException e) {
                     e.printStackTrace();
-                    Log.e(TAG, "onActivityResult: File writing error" );
+                    Log.e(TAG, "onActivityResult: File writing error");
                 }
 
             }
         }
     }
 
-
     @SuppressLint("StaticFieldLeak")
-    class NovelLoad extends AsyncTask<Novel,Integer,Boolean> {
+    class NovelLoad extends AsyncTask<Novel, Integer, Boolean> {
         private static final String TAG = "NovelSearch";
         private String ImgUrl;
         private String des;
@@ -143,18 +145,16 @@ public class DetailActivity extends AppCompatActivity {
                 }
                 pattern = Pattern.compile(img);
                 m = pattern.matcher(resp);
-                while (m.find())
-                {
+                while (m.find()) {
                     ImgUrl = m.group(1);
                 }
-                int start,end;
+                int start, end;
                 start = ImgUrl.indexOf("h");
-                end = ImgUrl.indexOf("\"",start+1);
-                ImgUrl = ImgUrl.substring(start,end);
+                end = ImgUrl.indexOf("\"", start + 1);
+                ImgUrl = ImgUrl.substring(start, end);
                 pattern = Pattern.compile("<meta property=\"og:description\" content=\"(.*)\" /> \n");
                 m = pattern.matcher(resp);
-                while (m.find())
-                {
+                while (m.find()) {
                     des = m.group(1);
                 }
             } catch (IOException e) {
@@ -196,18 +196,16 @@ public class DetailActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean aBoolean) {
             super.onPostExecute(aBoolean);
-            if (aBoolean)
-            {
-                ImageView imageView = (ImageView) findViewById(R.id.detailimg);
-                ((TextView)findViewById(R.id.detaildes)).setText("简介:\n" + des);
+            if (aBoolean) {
+                ImageView imageView = findViewById(R.id.detailimg);
+                ((TextView) findViewById(R.id.detaildes)).setText("简介:\n" + des);
                 DetailActivity.novel = this.novel;
                 Log.d(TAG, "onPostExecute: ImgUrl:" + ImgUrl);
                 Glide.with(DetailActivity.this).load(ImgUrl).into(imageView);
-                Toast.makeText(DetailActivity.this,"目录获取成功！",Toast.LENGTH_SHORT)
+                Toast.makeText(DetailActivity.this, "目录获取成功！", Toast.LENGTH_SHORT)
                         .show();
                 ArrayList<String> arrayList = new ArrayList<>();
-                for (Integer i:novel.getChapterName().keySet())
-                {
+                for (Integer i : novel.getChapterName().keySet()) {
                     arrayList.add(novel.getChapterName().get(i));
                 }
                 DetailActivity.dummyContent = new DummyContent(arrayList);
@@ -216,32 +214,28 @@ public class DetailActivity extends AppCompatActivity {
         }
     }
 
-
     @SuppressWarnings("deprecation")
     @SuppressLint("StaticFieldLeak")
-    public class NovelDownload extends AsyncTask<Novel,Integer,Boolean> {
-        private final ExecutorService fixedThreadPoll = Executors.newFixedThreadPool(3);
+    public class NovelDownload extends AsyncTask<Novel, Integer, Boolean> {
+        private final ExecutorService fixedThreadPoll = Executors.newFixedThreadPool(9);
         private final ArrayList<DownloadThread> threads = new ArrayList<>();
-        private  Novel novel;
         public int all;
         public int hasFinished = 0;
+        private Novel novel;
 
         @Override
         protected Boolean doInBackground(Novel... novels) {
             novel = novels[0];
-            HashMap<Integer,String> map = (HashMap<Integer, String>) novel.getChapterUrlList();
-            for (Integer i:map.keySet())
-            {
-                threads.add(new DownloadThread(i,map.get(i),this));
+            HashMap<Integer, String> map = (HashMap<Integer, String>) novel.getChapterUrlList();
+            for (Integer i : map.keySet()) {
+                threads.add(new DownloadThread(i, map.get(i), this));
             }
             all = map.size();
-            for (DownloadThread d:threads)
-            {
+            for (DownloadThread d : threads) {
                 this.fixedThreadPoll.execute(d);
             }
             this.fixedThreadPoll.shutdown();
-            while (!fixedThreadPoll.isTerminated())
-            {
+            while (!fixedThreadPoll.isTerminated()) {
                 publishProgress(hasFinished);
             }
             return true;
@@ -258,21 +252,19 @@ public class DetailActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean aBoolean) {
             super.onPostExecute(aBoolean);
-            if (aBoolean)
-            {
+            if (aBoolean) {
                 Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.setType("application/txt");
-                intent.putExtra(Intent.EXTRA_TITLE, novel.getName()+".txt");
+                intent.putExtra(Intent.EXTRA_TITLE, novel.getName() + ".txt");
 
                 // Optionally, specify a URI for the directory that should be opened in
                 // the system file picker when your app creates the document.
-                DetailActivity.this.startActivityForResult(intent,1);
+                DetailActivity.this.startActivityForResult(intent, 1);
             }
         }
 
-        public synchronized  void Progress()
-        {
+        public synchronized void Progress() {
             hasFinished++;
         }
 
@@ -282,12 +274,6 @@ public class DetailActivity extends AppCompatActivity {
             int size = DetailActivity.novel.getChapterUrlList().size();
             progressBar.setMax(size);
         }
-    }
-
-    public synchronized static void getContent(int id, String content)
-    {
-        content = novel.getChapterName().get(id) + '\n' + content;
-        Content.put(id,content);
     }
 
 }
